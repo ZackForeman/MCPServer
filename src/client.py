@@ -1,4 +1,5 @@
 import asyncio
+import configparser
 from llama_index.llms.ollama import Ollama
 from llama_index.core import Settings
 from llama_index.tools.mcp import BasicMCPClient, McpToolSpec
@@ -19,7 +20,7 @@ async def get_agent(tools: McpToolSpec):
     tools = await tools.to_tool_list_async()
     agent = FunctionAgent(
         name="Agent",
-        description="An agent that can work with Our Database software.",
+        description="An agent that can work with Python Scripts.",
         tools=tools,
         llm=llm,
         system_prompt=SYSTEM_PROMPT,
@@ -33,11 +34,11 @@ async def handle_user_message(
     verbose: bool = False,
 ):
     handler = agent.run(message_content, ctx=agent_context)
-    async for event in handler.stream_events():
-        if verbose and type(event) == ToolCall:
-            print(f"Calling tool {event.tool_name} with kwargs {event.tool_kwargs}")
-        elif verbose and type(event) == ToolCallResult:
-            print(f"Tool {event.tool_name} returned {event.tool_output}")
+    #async for event in handler.stream_events():
+    #    if verbose and type(event) == ToolCall:
+    #        print(f"Calling tool {event.tool_name} with kwargs {event.tool_kwargs}")
+    #    elif verbose and type(event) == ToolCallResult:
+    #        print(f"Tool {event.tool_name} returned {event.tool_output}")
 
     response = await handler
     return str(response)
@@ -50,8 +51,12 @@ if __name__ == "__main__":
 
     while True:
         user_input = input("Enter your message: ")
+        wrapped_input =  f"""write a python script to:
+        {user_input}
+        give ONLY THE CODE to the run script tool to execute the python code and add install commands for the dependencies as comments at the top of the file without extra text. Then, using the response from the tool, give a response to the user. 
+"""
         if user_input == "exit":
             break
-        print("User: ", user_input)
-        response = asyncio.get_event_loop().run_until_complete(handle_user_message(user_input, agent, agent_context, verbose=True))
+        # print("User: ", wrapped_input)
+        response = asyncio.get_event_loop().run_until_complete(handle_user_message(wrapped_input, agent, agent_context, verbose=True))
         print("Agent: ", response)

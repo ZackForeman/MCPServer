@@ -1,0 +1,6 @@
+- Install uv and Ollama
+- Set up uv venv inside src directory
+- add uv install to the config.ini
+- run powershell: set-executionpolicy remotesigned
+- enter into the src folder, uv run server.py
+- enter into the src folder, uv run client.py 

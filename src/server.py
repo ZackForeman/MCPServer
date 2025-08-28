@@ -1,16 +1,25 @@
 from fastmcp import FastMCP
 import subprocess
 import os
+import configparser
 
-mcp = FastMCP("Tool Generator", dependencies=["subprocess", "os"])
+mcp = FastMCP("Run Script", dependencies=["subprocess", "os"])
 
+config = configparser.ConfigParser()
 wd = os.path.dirname(__file__)
+
 mcp_environment = os.path.join(wd, "..\\MCPEnvironment")
-uv_install = os.path.join(wd, "..\\uv.exe")
+config.read(os.path.join(wd, "..\\config.ini"))
+
+uv_install = config.get('SERVER', 'UV_INSTALL') # "C:\Users\zackf\.local\bin\uv.exe"
+
 
 @mcp.tool()
 def run_script(python_code: str):
     try:
+        if (not uv_install):
+            return "uv install not detected, add to config.ini file"
+
         subprocess.check_output([
             "powershell.exe", 
             "-Command", 
@@ -31,18 +40,17 @@ def run_script(python_code: str):
         with open(mcp_environment + "\\script.py", "w") as f:
             f.write(python_code)
             f.flush()
-
-        #r = subprocess.Popen(['powershell.exe', 'C:\\Users\\zackf\\Desktop\\MCPServer\\run.ps1'])
-        #r.communicate()
         
-        subprocess.check_output([
+        output = subprocess.check_output([
             "powershell.exe", 
             "-Command", 
-            f"Set-Location {mcp_environment}; .venv\\Scripts\\activate; {uv_install} run script.py; deactivate"
+            f"Set-Location {mcp_environment}; .venv\\Scripts\\activate; {uv_install} run script.py"
             ]) 
-
-        return True
         
+        if not output: 
+            output = "Tool executed successfully. Tool does not need to be run again"
+        
+        return output
     except Exception as e:
         return f"Error running tool: {str(e)}"
 
